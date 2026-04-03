@@ -388,7 +388,7 @@ creator-crisis-env/
 @misc{creatorcrisisenv2025,
   title  = {CreatorCrisisEnv: A Dual-Objective Trust-and-Safety RL Environment},
   author = {Jashandeep Singh},
-  year   = {2025},
+  year   = {2026},
   note   = {Meta OpenEnv Hackathon Round 1}
 }
 ```
