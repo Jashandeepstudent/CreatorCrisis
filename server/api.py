@@ -339,37 +339,6 @@ def _grade(session: _Session, task_id: str) -> dict:
 #  ENDPOINTS
 # ─────────────────────────────────────────────────────────────────────────────
 
-@app.get("/", tags=["info"], include_in_schema=False)
-async def root():
-    """Root redirect — sends browsers to the interactive API docs."""
-    from fastapi.responses import HTMLResponse
-    return HTMLResponse("""
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>CreatorCrisisEnv — OpenEnv API</title>
-  <meta http-equiv="refresh" content="0; url=/docs">
-  <style>
-    body { font-family: sans-serif; display: flex; align-items: center;
-           justify-content: center; height: 100vh; margin: 0; background: #0f172a; color: #e2e8f0; }
-    .card { text-align: center; padding: 2rem; }
-    h1 { font-size: 2rem; margin-bottom: 0.5rem; }
-    p  { color: #94a3b8; }
-    a  { color: #38bdf8; text-decoration: none; font-weight: bold; }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <h1>🛡️ CreatorCrisisEnv</h1>
-    <p>Meta OpenEnv Hackathon · Dual-objective Trust &amp; Safety RL Environment</p>
-    <p>Redirecting to <a href="/docs">API docs</a>…</p>
-  </div>
-</body>
-</html>
-""")
-
-
 @app.get("/health", tags=["liveness"])
 async def health():
     """Liveness probe. HF Space automated ping hits this."""
@@ -377,8 +346,10 @@ async def health():
 
 
 @app.post("/reset", tags=["openenv"])
-async def reset(req: ResetRequest):
+async def reset(req: ResetRequest | None = None):
     """Start a new episode. Resets shaper, milestone tracker, and replay recorder."""
+    if req is None:
+        req = ResetRequest()
     s = _get_session(req.session_id)
     with s.lock:
         env = CreatorCrisisEnv(render_mode=None)
