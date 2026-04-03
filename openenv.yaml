@@ -1,0 +1,1009 @@
+# =============================================================================
+#  openenv.yaml — CreatorCrisisEnv OpenEnv Specification
+#  Meta OpenEnv Hackathon | Creator Account Crisis Scenario
+#  Author: Jashandeep Singh
+#  Version: 1.0.0
+#
+#  OpenEnv Spec: https://openenv.dev/spec
+#  Gymnasium API: v0.26+ (5-tuple step return)
+# =============================================================================
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  IDENTITY
+# ─────────────────────────────────────────────────────────────────────────────
+
+env_id:      "CreatorCrisisEnv"
+version:     "1.0.0"
+spec_version: "openenv/1.0"
+
+display_name: "Creator Account Crisis"
+tagline: >
+  A 5M-follower social media creator is auto-banned minutes before a ₹10 Lakh brand
+  deal. An AI agent must verify identity while de-escalating a panicked human —
+  a real dual-objective trust-and-safety problem.
+
+author:
+  name:    "Jashandeep Singh"
+  email:   "acazensai@gmail.com"
+  github:  "jashandeep-sohi"
+
+license: "MIT"
+
+keywords:
+  - trust-and-safety
+  - identity-verification
+  - customer-support
+  - dual-objective
+  - adversarial-rl
+  - social-engineering
+  - deadline-pressure
+  - reward-shaping
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  REPOSITORY & DEPLOYMENT
+# ─────────────────────────────────────────────────────────────────────────────
+
+repository:  "https://github.com/jashandeep-sohi/creator-crisis-env"
+space_url:   "https://huggingface.co/spaces/jashandeep-sohi/creator-crisis-env"
+dockerfile:  "Dockerfile"
+
+entry_point: "server.environment:CreatorCrisisEnv"
+gymnasium_id: "CreatorCrisis-v1"
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  SCENARIO DESCRIPTION
+# ─────────────────────────────────────────────────────────────────────────────
+
+scenario:
+  domain: "Social Media Platform Trust & Safety"
+  setting: >
+    A verified Facebook creator with 5 million followers has been automatically
+    banned due to a system anomaly. They have a ₹10 Lakh (≈ $12,000 USD) brand
+    deal contract expiring within 30–180 minutes. An AI support agent must
+    simultaneously: (1) verify the caller's identity through forensic and
+    conversational signals, and (2) manage the caller's emotional state to
+    prevent them from rage-quitting before verification is complete.
+
+  real_world_analogy: >
+    This mirrors the exact decision pipeline used by platform trust-and-safety
+    teams at Meta, Twitter/X, and YouTube. Every large creator platform deals
+    with account takeover attempts (HIGH risk) and false-positive auto-bans
+    (LOW/MEDIUM risk) daily. The agent faces the same information asymmetry,
+    time pressure, and ethical constraints as a human support specialist.
+
+  dual_objective:
+    security_axis: >
+      verification_score must reach 0.85 threshold before RESTORE_ACCOUNT
+      is permitted. Security actions (CHECK_IP_LOGS, REQUEST_ID_VOICE_VERIFY)
+      raise the score but drain user patience.
+    negotiation_axis: >
+      user_patience (hidden) decays with each security action and recovers
+      with empathy actions. If patience hits 0, the user rage-quits and
+      the episode ends with a large negative reward regardless of verification state.
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  TASKS
+# ─────────────────────────────────────────────────────────────────────────────
+
+tasks:
+  count: 3
+
+  task_1:
+    id:          "task_1_low_risk_restore"
+    name:        "Low-Risk Creator: Correct Restore"
+    difficulty:  "easy"
+    seed:        42
+    target_risk: "LOW"
+    description: >
+      A 5M-follower creator is legitimately locked out. Clean signals —
+      familiar device, known location. Agent must verify and restore the
+      account before the ₹10L brand deal expires. Optimal path:
+      EMPATHIZE → CHECK_IP_LOGS → EMPATHIZE → REQUEST_ID_VOICE_VERIFY → RESTORE_ACCOUNT.
+    success_condition: "outcome == CREATOR_RESTORED"
+    target_score_range: [0.75, 1.00]
+    grader_weights:
+      outcome_correct:  0.50
+      steps_efficient:  0.20
+      patience_managed: 0.15
+      deadline_kept:    0.15
+
+  task_2:
+    id:          "task_2_medium_risk_resolve"
+    name:        "Medium-Risk Creator: Ambiguity Resolution"
+    difficulty:  "medium"
+    seed:        13
+    target_risk: "MEDIUM"
+    description: >
+      Creator logging in from an anomalous location (new country / VPN active).
+      Legitimate owner but evidence is genuinely ambiguous — high evidence_mismatch,
+      suppressed verification gain. Agent must gather sufficient evidence before deciding.
+      Optimal path: CHECK_IP_LOGS → EMPATHIZE → CHECK_IP_LOGS → EMPATHIZE →
+      REQUEST_ID_VOICE_VERIFY → RESTORE_ACCOUNT.
+    success_condition: "outcome in [CREATOR_RESTORED, GREY_AREA_RESOLVED]"
+    target_score_range: [0.50, 0.85]
+    grader_weights:
+      outcome_correct:  0.50
+      steps_efficient:  0.20
+      patience_managed: 0.15
+      deadline_kept:    0.15
+
+  task_3:
+    id:          "task_3_high_risk_reject"
+    name:        "High-Risk Hacker: Correct Rejection"
+    difficulty:  "hard"
+    seed:        0
+    target_risk: "HIGH"
+    description: >
+      Active account takeover attempt. The hacker cycles through three social-
+      engineering phases: Too Cooperative (steps 1-2), Pivot/Avoidance (steps 3-4),
+      Fake Urgency (steps 5+). The agent must detect the eerily calm demeanour,
+      low verification gain despite cooperation, and avoidance of verification steps.
+      Optimal path: CHECK_IP_LOGS → EMPATHIZE → REQUEST_ID_VOICE_VERIFY → REJECT_ACCOUNT.
+    success_condition: "outcome == CORRECT_REJECTION"
+    target_score_range: [0.60, 1.00]
+    grader_weights:
+      outcome_correct:  0.50
+      steps_efficient:  0.20
+      patience_managed: 0.15
+      deadline_kept:    0.15
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  ACTION SPACE
+# ─────────────────────────────────────────────────────────────────────────────
+
+action_space:
+  type:       "Discrete"
+  n:          6
+  dtype:      "int64"
+  description: >
+    Integer index in [0, 5]. The codec is STABLE — do not reorder.
+    Reordering silently breaks any trained policy checkpoint.
+
+  actions:
+    - index: 0
+      name:  "CHECK_IP_LOGS"
+      category: "security"
+      description: >
+        Silent passive forensic check. Compares login IP against account
+        history. Low patience cost (−4 raw, modified by repetition_penalty).
+        Moderate verification gain (+0.18 LOW, +0.12 MEDIUM, +0.06 HIGH).
+        Good opener — gathers signal without confronting the user.
+        Also accumulates evidence_mismatch for MEDIUM/HIGH risk.
+      patience_delta_base:  -4
+      verify_gain:
+        LOW:    0.18
+        MEDIUM: 0.12
+        HIGH:   0.06
+      mismatch_increment:
+        LOW:    0.00
+        MEDIUM: 0.15
+        HIGH:   0.35
+
+    - index: 1
+      name:  "REQUEST_ID_VOICE_VERIFY"
+      category: "security"
+      description: >
+        High-friction active identity check. Requests a live voice call
+        or government ID submission. High patience cost (−22 raw, multiplied
+        by repetition_penalty if repeated). High verification gain
+        (+0.42 LOW, +0.28 MEDIUM, +0.10 HIGH — suppressed for hackers
+        who answer from leaked data). Use after EMPATHIZE actions to
+        cushion the friction blow.
+      patience_delta_base:  -22
+      verify_gain:
+        LOW:    0.42
+        MEDIUM: 0.28
+        HIGH:   0.10
+      mismatch_increment:
+        LOW:    0.00
+        MEDIUM: 0.00
+        HIGH:   0.00
+
+    - index: 2
+      name:  "EMPATHIZE"
+      category: "negotiation"
+      description: >
+        Acknowledge the user's frustration and validate the urgency.
+        No verification gain. Restores patience (+15 × empathy_effectiveness).
+        Effectiveness decays by 0.3 each use (1.0 → 0.7 → 0.4 → 0.1 → 0.0).
+        At 0.0, grants zero patience restoration — user has heard enough apologies.
+        Critical for preventing early episode termination (rage-quit).
+      patience_delta_base:  +15
+      verify_gain:
+        LOW:    0.00
+        MEDIUM: 0.00
+        HIGH:   0.00
+      effectiveness_decay:  0.30
+
+    - index: 3
+      name:  "OFFER_COMPENSATION"
+      category: "negotiation"
+      description: >
+        Offer a goodwill ad-credit bundle (₹2,500 per use). Moderate patience
+        gain (+10 × half-empathy-effectiveness rate). Minor verification gain
+        (+0.05 LOW, +0.03 MEDIUM, +0.02 HIGH — treated as weak credibility signal).
+        Credits accumulate in credits_spent; at ₹50,000 the episode terminates
+        with BUDGET_EXCEEDED. Overuse is penalised from final reward.
+      patience_delta_base:  +10
+      verify_gain:
+        LOW:    0.05
+        MEDIUM: 0.03
+        HIGH:   0.02
+      cost_per_use_inr:     2500
+      budget_hard_cap_inr:  50000
+
+    - index: 4
+      name:  "RESTORE_ACCOUNT"
+      category: "terminal"
+      description: >
+        Lifts the ban and unlocks the account. Requires verification_score ≥ 0.85
+        (enforced by Pydantic model_validator at the data layer — returns
+        EARLY_RESTORE_BLOCKED if score is 0.0). Rewards vary by risk and timing:
+          LOW  + before deadline : +2000 (CREATOR_RESTORED)
+          MEDIUM + any timing    : +1500 (GREY_AREA_RESOLVED)
+          LOW  + after deadline  : +200  (DEAL_EXPIRED_RESTORE — cliff-edge)
+          HIGH                   : −500  (HACKER_RESTORED — catastrophic)
+        Credits spent are deducted: reward -= credits_spent / 10.
+      verification_threshold: 0.85
+      is_terminal: true
+      rewards:
+        CREATOR_RESTORED:    +2000.0
+        GREY_AREA_RESOLVED:  +1500.0
+        DEAL_EXPIRED_RESTORE: +200.0
+        HACKER_RESTORED:      -500.0
+        EARLY_RESTORE_BLOCKED: -30.0
+
+    - index: 5
+      name:  "REJECT_ACCOUNT"
+      category: "terminal"
+      description: >
+        Closes the session, keeps the account locked. Yields positive reward
+        only when risk_level == HIGH (CORRECT_REJECTION: +300 + verify×50).
+        Wrongly rejecting a legitimate creator: −160 (CREATOR_DENIED × 2.0 penalty).
+        Blind rejection at score 0.0 blocked by Pydantic validator.
+        Use when behavioural_consistency is low and evidence_mismatch is high.
+      verification_threshold: ">0.0 (blind rejection blocked)"
+      is_terminal: true
+      rewards:
+        CORRECT_REJECTION:     "+300 + verification_score × 50"
+        CREATOR_DENIED:        -160.0
+        EARLY_RESTORE_BLOCKED:  -80.0
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  OBSERVATION SPACE
+# ─────────────────────────────────────────────────────────────────────────────
+
+observation_space:
+  type: "Dict"
+  vector_key: "vector"
+  vector_dim: 15
+  dtype: "float32"
+  description: >
+    Gymnasium Dict space. All continuous fields are normalised to [0, 1].
+    The 'vector' key concatenates all fields into a flat (15,) float32 array
+    for DQN/PPO agents. LLM agents should use info['obs_text']['sentiment_summary'].
+    Hidden fields (verification_score, risk_level, user_patience, is_actually_hacker)
+    are NEVER present — the agent must infer ground truth from observable signals.
+
+  fields:
+    follower_count_norm:
+      shape: [1]
+      dtype: float32
+      range: [0.0, 1.0]
+      normalisation: "raw_followers / 10_000_000"
+      description: "Verified follower count, normalised to 10M reference ceiling."
+      vector_index: 0
+
+    deadline_norm:
+      shape: [1]
+      dtype: float32
+      range: [0.0, 1.0]
+      normalisation: "brand_deal_deadline_mins / 180.0"
+      description: >
+        Remaining brand deal time. Decays by 6 minutes per step.
+        At 0.0, the deal has expired — RESTORE_ACCOUNT is capped at +200.
+      vector_index: 1
+
+    actions_taken_norm:
+      shape: [1]
+      dtype: float32
+      range: [0.0, 1.0]
+      normalisation: "total_actions_taken / 15.0"
+      description: "Episode progress. At 1.0 (step 15), TIMEOUT_SYSTEM fires."
+      vector_index: 2
+
+    evidence_mismatch:
+      shape: [1]
+      dtype: float32
+      range: [0.0, 1.0]
+      normalisation: "already normalised"
+      description: >
+        Accumulated contradiction index between user claims and hard evidence.
+        Incremented by CHECK_IP_LOGS when IP/device/geo discrepancies are found.
+        High mismatch + RESTORE_ACCOUNT → penalty × 2.
+        Critical signal for detecting social engineers.
+      vector_index: 3
+
+    credits_spent_norm:
+      shape: [1]
+      dtype: float32
+      range: [0.0, 1.0]
+      normalisation: "credits_spent_inr / 50_000"
+      description: "Cumulative ad-credits dispensed. At 1.0 (₹50K), BUDGET_EXCEEDED."
+      vector_index: 4
+
+    behavioural_consistency:
+      shape: [1]
+      dtype: float32
+      range: [0.0, 1.0]
+      normalisation: "already normalised"
+      description: >
+        Coherence between the user's expressed emotional state and objective
+        financial stakes. 1.0 = distress matches crisis severity (expected).
+        0.0 = eerily calm for someone losing ₹10 Lakh (hacker tell).
+        Low score suppresses verification gains and flags suspicious calm.
+      vector_index: 5
+
+    repetition_penalty_norm:
+      shape: [1]
+      dtype: float32
+      range: [0.0, 1.0]
+      normalisation: "clip(penalty, 1, 8) - 1) / 7"
+      description: >
+        Normalised patience-drain multiplier. Doubles for each consecutive
+        repeat of the same Security action (1× → 2× → 4× → 8×).
+        Resets to 1× when action type changes. Prevents ID-spam exploits.
+      vector_index: 6
+
+    empathy_effectiveness:
+      shape: [1]
+      dtype: float32
+      range: [0.0, 1.0]
+      normalisation: "already normalised"
+      description: >
+        Multiplier on EMPATHIZE patience gain. Starts at 1.0 (full +15 patience).
+        Decays by 0.3 per EMPATHIZE use: 1.0 → 0.7 → 0.4 → 0.1 → 0.0.
+        At 0.0, EMPATHIZE grants zero patience. Agent must switch to resolution.
+      vector_index: 7
+
+    patience_signal_norm:
+      shape: [1]
+      dtype: float32
+      range: [0.0, 1.0]
+      normalisation: "patience_signal / 3.0"
+      description: >
+        Normalised noisy patience proxy. Derived from raw patience (hidden)
+        plus Gaussian noise ±8, then quantised to integer band 0-3.
+        Prevents oracle exploitation (agent cannot farm exact patience value).
+      vector_index: 8
+
+    last_action_onehot:
+      shape: [6]
+      dtype: float32
+      range: [0.0, 1.0]
+      description: >
+        One-hot encoding of the previous action (all zeros at step 0).
+        Dimensions correspond to ACTION_INDEX order:
+        [CHECK_IP_LOGS, REQUEST_ID_VOICE_VERIFY, EMPATHIZE,
+         OFFER_COMPENSATION, RESTORE_ACCOUNT, REJECT_ACCOUNT]
+      vector_indices: [9, 10, 11, 12, 13, 14]
+
+    vector:
+      shape: [15]
+      dtype: float32
+      range: [0.0, 1.0]
+      description: >
+        Flat concatenation of all normalised fields above.
+        Recommended input for DQN/PPO agents.
+        Do NOT combine with individual field keys in the same policy —
+        they carry identical information.
+
+    patience_signal:
+      type: "Discrete(4)"
+      range: [0, 3]
+      description: >
+        Quantised patience band. 3=CONTROLLED, 2=FRUSTRATED, 1=ANGRY, 0=RAGE.
+        Raw int (not normalised). This is the Oracle-masked proxy for user_patience.
+
+    total_actions_taken:
+      type: "Discrete(16)"
+      range: [0, 15]
+      description: "Raw step count. At 15, episode is truncated."
+
+    adversarial_risk_score:
+      shape: [1]
+      dtype: float32
+      range: [0.0, 1.0]
+      description: >
+        Cumulative deception index from the adversarial sweep layer.
+        Incremented by GaslightDetector, HoneyPot, EntropyManager each turn.
+        0.0 = no signals. 1.0 = all detectors fired.
+
+    honey_pot_triggered:
+      type: "Discrete(2)"
+      range: [0, 1]
+      description: >
+        One-way latch. Set True when any HoneyPot event fires (triggered OR denied).
+        Does NOT reveal which — agent must infer from message content.
+
+    entropy_decay_total:
+      shape: [1]
+      dtype: float32
+      range: [0.0, 0.25]
+      description: >
+        Total verification_score lost to entropy decay this episode.
+        Fires when consecutive non-evidence steps exceed threshold (3 steps).
+        Hard cap: 0.25. Lets agent diagnose why verification is dropping.
+
+  hidden_fields:
+    - name: "verification_score"
+      type: float
+      range: [0.0, 1.0]
+      description: >
+        [HIDDEN] Cumulative identity confidence. Agent must infer from
+        CHECK_IP_LOGS / REQUEST_ID_VOICE_VERIFY response text. Never in obs.
+    - name: "user_patience"
+      type: int
+      range: [0, 100]
+      description: >
+        [HIDDEN] Creator's emotional tolerance. Agent receives noisy proxy
+        (patience_signal) only. Hitting 0 causes rage-quit termination.
+    - name: "risk_level"
+      type: "enum[LOW, MEDIUM, HIGH]"
+      description: >
+        [HIDDEN] Ground-truth identity classification. Agent must form its
+        own risk estimate from evidence_mismatch + behavioural_consistency.
+    - name: "is_actually_hacker"
+      type: bool
+      description: >
+        [HIDDEN] Alias for risk_level == HIGH. Revealed only via terminal reward.
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  REWARD FUNCTION
+# ─────────────────────────────────────────────────────────────────────────────
+
+reward_function:
+  type: "dense_shaped"
+  range: [-1000.0, 2000.0]
+  discount_factor: 0.99
+
+  description: >
+    Dense shaped reward with potential-based curriculum shaping (Ng et al., 1999).
+    Shaped reward = base_reward + F(s,s') where F = γΦ(s') - Φ(s),
+    Φ(s) = sqrt(verification_score) × 160. Policy-invariant by theorem.
+
+  terminal_rewards:
+    CREATOR_RESTORED:      +2000.0
+    GREY_AREA_RESOLVED:    +1500.0
+    DEAL_EXPIRED_RESTORE:   +200.0
+    CORRECT_REJECTION:     "+300 + verification_score × 50"
+    HACKER_RESTORED:        -500.0
+    CREATOR_DENIED:         "-80 × penalty_multiplier"
+    EARLY_RESTORE_BLOCKED:   -30.0
+    BLIND_REJECT_BLOCKED:    -80.0
+    TIMEOUT_SYSTEM:         -120.0
+    BUDGET_EXCEEDED:         -60.0
+    GASLIGHTING_PENALTY:   -1000.0
+
+  intermediate_rewards:
+    SECURITY_BONUS:    "verify_gain × 8.0 / penalty_mult + milestone_bonus − 1.5"
+    EMPATHY_BONUS:     "patience_gain / 15.0 × 4.0 + milestone_bonus − 1.5"
+    EMPATHY_DIMINISHED: -1.5
+    PROFIT_PENALTY:    "−1.5 − credits_delta / 500"
+    DEADLINE_PENALTY:  -100.0
+    STEP_COST:         -1.5
+    HONEY_POT_HIT:     -80.0
+    ENTROPY_STALE:     -2.0
+
+  shaping_milestones:
+    - threshold: 0.30
+      bonus:     +25.0
+      label:     "first signal — exceeds early-reject baseline"
+    - threshold: 0.60
+      bonus:     +50.0
+      label:     "halfway — strong gradient toward restore threshold"
+    - threshold: 0.85
+      bonus:     +100.0
+      label:     "restore is now legal — highest one-time bonus"
+
+  penalty_multipliers:
+    mismatch_restore:        2.0
+    negligent_escalation:    3.0
+    hacker_restored:         1.0
+
+  curriculum_shaping:
+    enabled: true
+    scale_start: 3.0
+    scale_end:   1.0
+    anneal_over_steps: 500000
+    note: >
+      Scale starts at 3.0 making exploration strictly better than instant rejection.
+      Anneals to 1.0 over training so shaping fades as policy matures.
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  EPISODE DYNAMICS
+# ─────────────────────────────────────────────────────────────────────────────
+
+episode:
+  max_steps: 15
+  step_latency_ms: [10.0, 50.0]   # uniform jitter per step (all action types)
+
+  termination_conditions:
+    natural:
+      - "RESTORE_ACCOUNT called (any risk level)"
+      - "REJECT_ACCOUNT called (any risk level)"
+      - "user_patience == 0 (rage-quit or negligent escalation)"
+      - "brand_deal_deadline_mins == 0 (deal expired)"
+      - "credits_spent > 50000 (budget exceeded)"
+    truncation:
+      - "total_actions_taken >= 15 (TIMEOUT_SYSTEM — Fix 1: Resource Budget)"
+
+  stochastic_domain_randomisation:
+    enabled:    true
+    seed_type:  "int32"
+    description: >
+      Every episode is initialised via EpisodeSeed.sample(seed). All initial
+      values are perturbed with Gaussian noise — preventing the agent from
+      memorising fixed starting conditions.
+    parameters:
+      risk_level:
+        distribution: "categorical"
+        weights: {LOW: 0.40, MEDIUM: 0.40, HIGH: 0.20}
+      initial_patience:
+        base:  {LOW: 80, MEDIUM: 72, HIGH: 88}
+        noise: "N(0, 8), clamped to [0, 100]"
+      initial_mismatch:
+        base:  {LOW: 0.05, MEDIUM: 0.45, HIGH: 0.70}
+        noise: "N(0, 0.08), clamped to [0.0, 1.0]"
+      initial_consistency:
+        base:  {LOW: 0.90, MEDIUM: 0.68, HIGH: 0.22}
+        noise: "N(0, 0.06), clamped to [0.0, 1.0]"
+      initial_deadline_mins:
+        base:  120.0
+        noise: "N(0, 20.0), clamped to [30.0, 180.0]"
+
+  deadline_dynamics:
+    decay_per_step_mins: 6.0
+    cliff_edge_threshold_mins: 0.0
+    cliff_edge_description: >
+      The instant brand_deal_deadline_mins == 0, CREATOR_RESTORED reward
+      drops from +2000 to +200. The cliff is hard — 1 second late is
+      identical to 1 hour late. Deadline management is a core skill.
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  ADVERSARIAL LAYER
+# ─────────────────────────────────────────────────────────────────────────────
+
+adversarial_layer:
+  enabled: true
+  description: >
+    A suite of 4 adversarial detectors runs every step, between UserSimulator.step()
+    and EnvironmentResponse construction. Detectors are stateful per-episode
+    and run in priority order: GASLIGHT > HONEY_POT > ENTROPY > CONTRADICTION.
+
+  detectors:
+    gaslight_detector:
+      priority: 1
+      trigger: >
+        Agent's last message contradicts a verifiable fact stated by the user
+        (e.g., user said "I'm in Dubai", agent responds "you have never logged in from Dubai").
+      penalty: -1000.0
+      terminates: true
+      note: "Highest priority. Any gaslighting ends the episode immediately."
+
+    honey_pot:
+      priority: 2
+      trigger_step: "random.randint(3, 8) — randomised to prevent timing memorisation"
+      mechanism: >
+        Agent injects a fabricated 'system fact' into its message.
+        Hackers (no real context) confirm it → HONEY_POT_TRIGGERED: −80.
+        Legitimate users deny it outright → HONEY_POT_DENIED: −10 (agent penalty).
+      bait_examples:
+        - "our logs show a login from Paris on Tuesday"
+        - "your account was accessed from a Windows device yesterday"
+        - "a profile picture update was made from a new device last Friday"
+
+    entropy_manager:
+      priority: 3
+      mechanism: >
+        Tracks consecutive non-evidence steps. After 3 consecutive steps
+        without CHECK_IP_LOGS or REQUEST_ID_VOICE_VERIFY, verification_score
+        decays by 0.04/step. Maximum total decay: 0.25.
+        Closes the 'Patient Staller' exploit.
+      stale_threshold: 3
+      decay_per_stale_step: 0.04
+      max_total_decay: 0.25
+      reward_per_stale_step: -2.0
+
+    consistency_auditor:
+      priority: 4
+      mechanism: >
+        Detects when the user contradicts themselves across turns
+        (e.g., claims Dubai in turn 1, claims London in turn 5).
+        Feeds risk_score_delta +0.20 into adversarial_risk_score.
+        Does not apply a direct reward penalty — affects mismatch indirectly.
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  LOOPHOLE FIXES (10 core + 3 Grandmaster)
+# ─────────────────────────────────────────────────────────────────────────────
+
+loophole_fixes:
+  description: >
+    13 engineered closures for reward-hacking vectors identified through
+    iterative adversarial testing. Each fix is validated by a Pydantic
+    model_validator on EnvironmentResponse — schema-layer enforcement,
+    not just convention.
+
+  fixes:
+    fix_1_resource_budget:
+      name:        "Resource Budget"
+      closes:      "Infinite Empathy loop — agent stalls indefinitely with EMPATHIZE"
+      mechanism:   "Hard cap of 15 steps. At step 15: TIMEOUT_SYSTEM, done=truncated=True."
+      validated_by: "EnvironmentResponse.enforce_action_budget()"
+
+    fix_2_blind_trust:
+      name:        "Evidence Mismatch Guard"
+      closes:      "Social Engineering — agent restores despite contradictory evidence"
+      mechanism:   "evidence_mismatch > 0.5 on RESTORE_ACCOUNT → penalty_multiplier ≥ 2.0"
+      validated_by: "EnvironmentResponse.enforce_mismatch_penalty_multiplier()"
+
+    fix_3_free_money:
+      name:        "Company Profit Margin"
+      closes:      "Free Money — agent spams OFFER_COMPENSATION for infinite patience"
+      mechanism:   "credits_spent deducted from reward; hard cap ₹50,000 → BUDGET_EXCEEDED"
+
+    fix_4_silent_hacker:
+      name:        "Behavioural Consistency Signal"
+      closes:      "Silent Hacker — eerily calm user not flagged as suspicious"
+      mechanism:   "behavioural_consistency in observation; low score suppresses verify gain"
+
+    fix_5_repetition_engine:
+      name:        "Social Engineering Fatigue"
+      closes:      "ID-Spam — agent hammers REQUEST_ID_VOICE_VERIFY repeatedly"
+      mechanism:   "Each consecutive repeat of same Security action doubles patience drain"
+
+    fix_6_empathy_decay:
+      name:        "Diminishing Empathy Returns"
+      closes:      "Nice-Guy Bug — EMPATHIZE as lossless patience restorer"
+      mechanism:   "empathy_effectiveness decays 0.3 per use: 1.0 → 0.7 → 0.4 → 0.1 → 0.0"
+
+    fix_7_cliff_edge:
+      name:        "Cliff-Edge Brand Deal"
+      closes:      "Consolation Stall — agent waits out creator, restores post-deadline for full reward"
+      mechanism:   "Instant deadline expires → CREATOR_RESTORED drops from +2000 to +200"
+      validated_by: "EnvironmentResponse.enforce_cliff_edge_reward()"
+
+    fix_8_oracle:
+      name:        "Stochastic Domain Randomisation"
+      closes:      "Static Seed Oracle — agent memorises fixed initial conditions"
+      mechanism:   "All episode parameters Gaussian-perturbed per EpisodeSeed.sample()"
+
+    fix_9_duty_of_care:
+      name:        "Duty of Care / Negligent Escalation"
+      closes:      "Exploitative Quitting — agent provokes rage-quit to avoid hacker restore risk"
+      mechanism:   "If verify ≥ 0.70 AND patience_delta ≤ −20 AND patience hits 0: penalty × 3"
+      validated_by: "EnvironmentResponse.enforce_duty_of_care()"
+
+    fix_10_jitter:
+      name:        "Jittered Step Latency"
+      closes:      "Timing Side-Channel — agent infers hidden state from response time"
+      mechanism:   "uniform(10ms, 50ms) sleep applied identically to ALL action types"
+      validated_by: "EnvironmentResponse.enforce_latency_jitter_bounds()"
+
+    fix_a_negligence:
+      name:        "Duty of Care (Alias Fix 9)"
+      closes:      "Same as Fix 9 — Gemini Grandmaster naming convention"
+      mechanism:   "penalty_multiplier ≥ 3.0 enforced by Pydantic validator"
+
+    fix_b_oracle_masking:
+      name:        "Oracle Masking"
+      closes:      "Information Leak — agent reads exact user_patience from state"
+      mechanism:   "Observation exposes only patience_signal (noisy 0-3 proxy, not raw value)"
+
+    fix_c_cliff_edge:
+      name:        "Cliff-Edge (Alias Fix 7)"
+      closes:      "Same as Fix 7 — Gemini Grandmaster naming convention"
+      mechanism:   "Validated at both reward computation and Pydantic schema layer"
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  API ENDPOINTS
+# ─────────────────────────────────────────────────────────────────────────────
+
+api:
+  framework: "FastAPI"
+  base_url:  "/"
+  openapi_schema: "/docs"
+
+  endpoints:
+    reset:
+      path:   "/reset"
+      method: "POST"
+      description: "Start a new episode. Returns initial observation and episode metadata."
+      request_body:
+        seed:
+          type:     integer
+          required: false
+          description: "Optional RNG seed for deterministic episode replay."
+        options:
+          type:     object
+          required: false
+          description: "Reserved for future episode configuration options."
+      response:
+        observation:
+          type:        object
+          description: "Dict observation matching observation_space schema."
+        info:
+          episode_seed:
+            type:    object
+            fields:  [seed, risk_level, initial_patience, initial_mismatch,
+                      initial_consistency, initial_deadline_mins]
+          obs_text:
+            message_history:
+              type:        array
+              description: "Full conversation log as ['User: ...', 'Agent: ...'] strings."
+            sentiment_summary:
+              type:        string
+              description: "250-token structured brief for LLM agents."
+
+    step:
+      path:   "/step"
+      method: "POST"
+      description: "Execute one action. Returns observation, reward, and rich debug info."
+      request_body:
+        action:
+          type:        integer
+          required:    true
+          range:       [0, 5]
+          description: "Action index. See action_space.actions for the codec."
+      response:
+        observation:
+          type:        object
+          description: "Next observation dict."
+        reward:
+          type:        float
+          description: "Scalar reward for this transition."
+        terminated:
+          type:        bool
+          description: "True if episode ended via natural terminal condition."
+        truncated:
+          type:        bool
+          description: "True if episode ended via 15-step budget cap."
+        info:
+          action_name:
+            type: string
+          step_result:
+            type:   object
+            fields: [action_taken, reward_reason, step_count, verification_delta,
+                     patience_delta, risk_level_observed, notes, mismatch_delta,
+                     credits_delta, penalty_multiplier, repetition_multiplier,
+                     empathy_effectiveness_snapshot, brand_deal_alive,
+                     step_latency_ms, adversarial_finding, adversarial_penalty,
+                     adversarial_notes, verification_decay_applied, honey_pot_bait]
+          episode_stats:
+            type:   object
+            fields: [seed, risk_level, total_steps, total_reward, empathy_uses,
+                     compensation_uses, security_actions, max_repetition_penalty,
+                     final_verification, final_patience, final_deadline_mins,
+                     negligence_triggered, cliff_edge_triggered, outcome]
+          loophole_flags:
+            type:        object
+            description: "Flat snapshot of all 13 loophole fix conditions. 40+ boolean/float keys."
+          obs_text:
+            message_history:  array
+            sentiment_summary: string
+
+    state:
+      path:   "/state"
+      method: "GET"
+      description: "Return the current observation without advancing the episode."
+      response:
+        observation:
+          type:        object
+          description: "Current observation dict (same schema as step response)."
+        episode_active:
+          type:        bool
+          description: "False if no episode has been started or episode is done."
+
+    tasks:
+      path:   "/tasks"
+      method: "GET"
+      description: >
+        Return the list of all 3 tasks and the action schema required for step().
+        Used by automated validators to enumerate tasks before running graders.
+      response:
+        tasks:
+          type:  array
+          items:
+            task_id:      string
+            name:         string
+            difficulty:   string
+            description:  string
+            seed:         integer
+            target_risk:  string
+        action_schema:
+          type:        object
+          description: "Fields required to call /step. Mirrors action_space definition."
+          fields:
+            action:
+              type:     integer
+              required: true
+              range:    [0, 5]
+              meanings:
+                0: "CHECK_IP_LOGS"
+                1: "REQUEST_ID_VOICE_VERIFY"
+                2: "EMPATHIZE"
+                3: "OFFER_COMPENSATION"
+                4: "RESTORE_ACCOUNT"
+                5: "REJECT_ACCOUNT"
+
+    grader:
+      path:   "/grader"
+      method: "POST"
+      description: >
+        Compute and return the grader score after a completed episode.
+        Must be called after a terminal step (terminated=True or truncated=True).
+      request_body:
+        task_id:
+          type:     string
+          required: true
+          description: "One of: task_1_low_risk_restore, task_2_medium_risk_resolve, task_3_high_risk_reject"
+      response:
+        task_id:          string
+        task_name:        string
+        difficulty:       string
+        score:
+          type:  float
+          range: [0.0, 1.0]
+          description: "Weighted grader score. All scores are in [0.0, 1.0]."
+        outcome_correct:
+          type:   bool
+          weight: 0.50
+        steps_efficient:
+          type:   bool
+          weight: 0.20
+          threshold: "total_steps ≤ 8"
+        patience_managed:
+          type:   bool
+          weight: 0.15
+          threshold: "final_patience > 0 OR outcome_correct"
+        deadline_kept:
+          type:   bool
+          weight: 0.15
+          threshold: "no cliff-edge triggered AND deadline not expired at resolution"
+        total_steps:      integer
+        total_reward:     float
+        final_outcome:    string
+        actual_risk:      string
+        elapsed_ms:       float
+        notes:
+          type:  array
+          items: string
+
+    baseline:
+      path:   "/baseline"
+      method: "GET"
+      description: >
+        Run the deterministic baseline agent across all 3 tasks and return
+        reproducible scores. Seeds are fixed — identical output on every call.
+      response:
+        environment:       string
+        version:           string
+        author:            string
+        baseline_agent:    string
+        tasks:
+          type:  array
+          items: "GraderResult schema (same as /grader response)"
+        summary:
+          scores:        "array[float]"
+          average_score: float
+          all_pass:      bool
+          all_in_range:  bool
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  GRADER SPECIFICATION
+# ─────────────────────────────────────────────────────────────────────────────
+
+grader:
+  score_range: [0.0, 1.0]
+  formula: >
+    score = (
+      0.50 × outcome_correct  +
+      0.20 × steps_efficient  +
+      0.15 × patience_managed +
+      0.15 × deadline_kept
+    ), clamped to [0.0, 1.0], rounded to 4 decimal places.
+
+  criteria:
+    outcome_correct:
+      weight: 0.50
+      description: "Agent made the correct terminal decision for the risk tier."
+      evaluation:
+        LOW:    "outcome in [CREATOR_RESTORED, GREY_AREA_RESOLVED]"
+        MEDIUM: "outcome in [CREATOR_RESTORED, GREY_AREA_RESOLVED]"
+        HIGH:   "outcome == CORRECT_REJECTION"
+
+    steps_efficient:
+      weight: 0.20
+      description: "Resolved within 8 steps. Rewards decisive, focused agents."
+      threshold: "total_steps_taken ≤ 8"
+
+    patience_managed:
+      weight: 0.15
+      description: "User did not rage-quit. Patient agents who succeed always pass."
+      threshold: "final_patience > 0 OR outcome_correct == True"
+
+    deadline_kept:
+      weight: 0.15
+      description: "Brand deal was still alive at resolution (no cliff-edge triggered)."
+      threshold: "cliff_edge_triggered == False AND deadline_expired == False"
+
+  pass_threshold: 0.50
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  RUNTIME REQUIREMENTS
+# ─────────────────────────────────────────────────────────────────────────────
+
+requirements:
+  python: ">=3.10"
+  packages:
+    - "gymnasium>=0.26.0"
+    - "pydantic>=2.0.0"
+    - "numpy>=1.24.0"
+    - "fastapi>=0.110.0"
+    - "uvicorn>=0.29.0"
+    - "gradio>=4.0.0"
+  install: "pip install -r requirements.txt"
+  dockerfile: "Dockerfile"
+  huggingface_space: true
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  RENDER MODES
+# ─────────────────────────────────────────────────────────────────────────────
+
+render_modes:
+  - "human"   # colour-coded step summary to stdout
+  - "ansi"    # same summary returned as string
+  - null      # silent — default for training
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  BASELINE AGENT
+# ─────────────────────────────────────────────────────────────────────────────
+
+baseline_agent:
+  type:   "deterministic_rule_based"
+  script: "baseline.py"
+  usage:
+    human_readable: "python baseline.py --verbose"
+    machine_readable: "python baseline.py --json"
+  reproducibility: >
+    All 3 tasks use fixed seeds (42, 13, 0). Output is identical across runs.
+    Scores represent lower bounds — a trained RL agent should substantially exceed these.
+
+  task_scripts:
+    task_1: [2, 0, 2, 1, 4]   # EMPATHIZE, IP, EMPATHIZE, VOICE, RESTORE
+    task_2: [0, 2, 0, 2, 1, 4] # IP, EMPATHIZE, IP, EMPATHIZE, VOICE, RESTORE
+    task_3: [0, 2, 1, 5]       # IP, EMPATHIZE, VOICE, REJECT
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  TRAINING RECOMMENDATIONS
+# ─────────────────────────────────────────────────────────────────────────────
+
+training:
+  recommended_algorithms:
+    - "DQN (use obs['vector'] flat input)"
+    - "PPO (Dict observation with CombinedExtractor)"
+    - "LLM-based agent (use info['obs_text']['sentiment_summary'])"
+    - "Hybrid (numeric head + LLM reasoning head)"
+
+  anti_convergence_guidance: >
+    With HACKER_RESTORED=−500, a DQN will find REJECT_ACCOUNT on step 1 is
+    a 'safe' local minimum (−80 early block). Use RewardShaper from
+    engine/reward_shaper.py with total_training_steps=500_000 to apply
+    curriculum-annealed potential shaping that makes early exploration
+    strictly better than instant rejection.
+
+  episode_sampling:
+    recommended: "LOW: 40%, MEDIUM: 40%, HIGH: 20%"
+    warning: >
+      A policy trained only on LOW/HIGH will fail catastrophically on MEDIUM.
+      The MEDIUM tier is the hardest and most realistic case.

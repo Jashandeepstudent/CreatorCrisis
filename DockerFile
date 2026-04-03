@@ -1,0 +1,36 @@
+FROM python:3.11-slim
+
+# ── Metadata ──────────────────────────────────────────────────────────────────
+LABEL maintainer="Jashandeep Singh <acazensai@gmail.com>"
+LABEL description="CreatorCrisisEnv — Meta OpenEnv Hackathon"
+LABEL version="1.0.0"
+
+# ── System deps ───────────────────────────────────────────────────────────────
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# ── Working directory ─────────────────────────────────────────────────────────
+WORKDIR /app
+
+# ── Python deps ───────────────────────────────────────────────────────────────
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# ── Copy source ───────────────────────────────────────────────────────────────
+COPY . .
+
+# ── Create data dirs for leaderboard + replay storage ────────────────────────
+RUN mkdir -p data/replays
+
+# ── HF Spaces requires port 7860 ─────────────────────────────────────────────
+# We run both the FastAPI server (8000) and Gradio UI (7860) via a launcher.
+EXPOSE 7860 8000
+
+# ── Entrypoint ────────────────────────────────────────────────────────────────
+# start.sh launches uvicorn (API) in the background, then Gradio in foreground.
+# HF Spaces pings port 7860 for liveness — Gradio handles that.
+# The /health and all OpenEnv endpoints are on 8000 via the FastAPI server.
+CMD ["bash", "start.sh"]
