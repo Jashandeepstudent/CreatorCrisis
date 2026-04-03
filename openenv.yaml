@@ -692,7 +692,7 @@ loophole_fixes:
 
     fix_a_negligence:
       name:        "Duty of Care (Alias Fix 9)"
-      closes:      "Same as Fix 9 — Gemini Grandmaster naming convention"
+      closes:      "Same as Fix 9 —  Grandmaster naming convention"
       mechanism:   "penalty_multiplier ≥ 3.0 enforced by Pydantic validator"
 
     fix_b_oracle_masking:
@@ -702,7 +702,7 @@ loophole_fixes:
 
     fix_c_cliff_edge:
       name:        "Cliff-Edge (Alias Fix 7)"
-      closes:      "Same as Fix 7 — Gemini Grandmaster naming convention"
+      closes:      "Same as Fix 7 —  Grandmaster naming convention"
       mechanism:   "Validated at both reward computation and Pydantic schema layer"
 
 # ─────────────────────────────────────────────────────────────────────────────
