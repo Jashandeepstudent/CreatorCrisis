@@ -346,8 +346,7 @@ async def health():
 
 @app.get("/", tags=["liveness"])
 async def root():
-    """Root path — validator ping."""
-    return {"status": "ok", "env": "CreatorCrisisEnv", "version": "1.0.0"}
+    return RedirectResponse(url="/docs")
 
 @app.post("/reset", tags=["openenv"])
 async def reset(req: ResetRequest | None = None):
