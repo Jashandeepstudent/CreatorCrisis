@@ -589,13 +589,15 @@ def main() -> None:
     # ── Validate + load credentials ───────────────────────────────────
     api_base = os.environ.get("API_BASE_URL", "").strip()
     model    = os.environ.get("MODEL_NAME",   "").strip()
-    hf_token = os.environ.get("HF_TOKEN",     "").strip()
+    # Prefer API_KEY (injected by the hackathon LiteLLM proxy); fall back to HF_TOKEN
+    api_key  = (os.environ.get("API_KEY", "").strip()
+                or os.environ.get("HF_TOKEN", "").strip())
 
-    _env_vars_present = api_base and model and hf_token
+    _env_vars_present = api_base and model and api_key
 
     if args.dry_run or not _env_vars_present:
         if not args.dry_run and not _env_vars_present:
-            missing = [n for n, v in [("API_BASE_URL", api_base), ("MODEL_NAME", model), ("HF_TOKEN", hf_token)] if not v]
+            missing = [n for n, v in [("API_BASE_URL", api_base), ("MODEL_NAME", model), ("API_KEY / HF_TOKEN", api_key)] if not v]
             print(
                 f"[WARN] Environment variable(s) not set: {', '.join(missing)}. "
                 "Falling back to dry-run / heuristic agent.",
@@ -610,7 +612,7 @@ def main() -> None:
     else:
         try:
             client = OpenAI(
-                api_key  = hf_token,
+                api_key  = api_key,
                 base_url = api_base,
             )
         except Exception as exc:
