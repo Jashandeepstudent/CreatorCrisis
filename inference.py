@@ -70,23 +70,9 @@ register()
 #  CONFIGURATION
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _require_env(name: str) -> str:
-    """
-    Read a mandatory environment variable.
-
-    Raises:
-        SystemExit: with a clear diagnostic if the variable is absent.
-    """
-    value = os.environ.get(name, "").strip()
-    if not value:
-        print(
-            f"[FATAL] Required environment variable '{name}' is not set.\n"
-            f"        Export it before running:\n"
-            f"          export {name}=<your value>",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-    return value
+def _get_env(name: str) -> str:
+    """Read an optional environment variable; returns empty string if absent."""
+    return os.environ.get(name, "").strip()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
