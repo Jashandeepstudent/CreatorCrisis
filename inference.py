@@ -601,21 +601,36 @@ def main() -> None:
     args = parser.parse_args()
 
     # ── Validate + load credentials ───────────────────────────────────
-    if args.dry_run:
-        api_base = "http://localhost:8000/v1"
-        model    = "heuristic-baseline"
-        hf_token = "dry-run"
+    api_base = os.environ.get("API_BASE_URL", "").strip()
+    model    = os.environ.get("MODEL_NAME",   "").strip()
+    hf_token = os.environ.get("HF_TOKEN",     "").strip()
+
+    _env_vars_present = api_base and model and hf_token
+
+    if args.dry_run or not _env_vars_present:
+        if not args.dry_run and not _env_vars_present:
+            missing = [n for n, v in [("API_BASE_URL", api_base), ("MODEL_NAME", model), ("HF_TOKEN", hf_token)] if not v]
+            print(
+                f"[WARN] Environment variable(s) not set: {', '.join(missing)}. "
+                "Falling back to dry-run / heuristic agent.",
+                file=sys.stderr,
+            )
+        api_base = api_base or "http://localhost:8000/v1"
+        model    = model    or "heuristic-baseline"
         client   = None
+        args.dry_run = True
         if args.verbose:
             print("[INFO] dry-run mode — no LLM calls will be made.", file=sys.stderr)
     else:
-        api_base = _require_env("API_BASE_URL")
-        model    = _require_env("MODEL_NAME")
-        hf_token = _require_env("HF_TOKEN")
-        client   = OpenAI(
-            api_key  = hf_token,
-            base_url = api_base,
-        )
+        try:
+            client = OpenAI(
+                api_key  = hf_token,
+                base_url = api_base,
+            )
+        except Exception as exc:
+            print(f"[WARN] Failed to init OpenAI client ({exc}). Falling back to dry-run.", file=sys.stderr)
+            client       = None
+            args.dry_run = True
 
     # ── Run all 3 tasks ────────────────────────────────────────────────
     all_results: list[dict[str, Any]] = []
