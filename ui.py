@@ -794,7 +794,8 @@ def do_step(action_idx: int, reasoning: str, env_state: dict):
     env_state["obs"] = obs
     env_state["total_reward"] += reward
     env_state["done"] = done
-    
+    reward_reason = info["step_result"].get("reward_reason", "STEP_COST")
+    env_state["step_log"].append((reward, reward_reason))
     sim_state = env._sim.state
     sr = info["step_result"]
     flags = info["loophole_flags"]
@@ -882,6 +883,7 @@ ALL_OUTPUTS_COUNT = 21  # 15 UI components + env_state + 5 button interactive st
 
 with gr.Blocks(
     title="Creator Crisis — Command Center",
+css=CUSTOM_CSS,  
 ) as demo:
 
     # ── Persistent state ──────────────────────────────────────────────
@@ -1030,23 +1032,7 @@ with gr.Blocks(
     )
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-#  ENTRY POINT
-# ─────────────────────────────────────────────────────────────────────────────
-# ─── EVENT WIRING (Inside the Container) ───
-    for idx, btn in enumerate([btn0, btn1, btn2, btn3, btn4, btn5]):
-        btn.click(
-            fn=lambda reasoning, es, _idx=idx: do_step(_idx, reasoning, es),
-            inputs=[reasoning_box, env_state],
-            outputs=SHARED_OUTPUTS,
-        )
 
-    # This makes sure the first scenario loads automatically
-    demo.load(
-        fn=do_reset, 
-        inputs=[seed_input, env_state], 
-        outputs=SHARED_OUTPUTS
-    )
 
 # ─── ENTRY POINT (Outside the Container) ───
 if __name__ == "__main__":
@@ -1059,5 +1045,4 @@ if __name__ == "__main__":
             secondary_hue="amber",
             neutral_hue="slate",
         ),
-        css=CUSTOM_CSS,
     )
