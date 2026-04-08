@@ -426,7 +426,8 @@ def _compute_score(
         0.15 * float(patience_managed) +
         0.15 * float(deadline_kept)
     )
-    return max(0.0, min(1.0, round(score, 4))), outcome_correct, steps_efficient, patience_managed, deadline_kept
+    score = max(0.001, min(0.999, round(score, 4)))
+    return score, outcome_correct, steps_efficient, patience_managed, deadline_kept
 
 
 # ─────────────────────────────────────────────────────────────────────────────
