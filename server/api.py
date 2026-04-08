@@ -40,7 +40,7 @@ for p in [_HERE, _ROOT]:
     if p not in sys.path:
         sys.path.insert(0, p)
 
-from fastapi import FastAPI, HTTPException, Query, Request, Body
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -175,7 +175,7 @@ class GraderRequest(BaseModel):
 class LBSubmitRequest(BaseModel):
     task_id:     str   = Field(...)
     agent_name:  str   = Field(..., max_length=64)
-    score:       float = Field(..., gt=0.0, lt=1.0)
+    score:       float = Field(..., ge=0.001, le=0.999)
     total_steps: int   = Field(..., ge=0)
     session_id:  str   = Field(default="default")
     notes:       str   = Field(default="")
@@ -346,7 +346,7 @@ async def health():
 
 
 @app.post("/reset", tags=["openenv"])
-async def reset(req: ResetRequest = Body(default=ResetRequest())):
+async def reset(req: ResetRequest):
     """Start a new episode. Resets shaper, milestone tracker, and replay recorder."""
     s = _get_session(req.session_id)
     with s.lock:
@@ -582,7 +582,7 @@ async def leaderboard_submit(req: LBSubmitRequest):
 
     entry = {
         "agent_name":   req.agent_name,
-        "score":        round(req.score, 4),
+        "score":        round(max(0.001, min(0.999, req.score)), 4),
         "total_steps":  req.total_steps,
         "notes":        req.notes[:200],
         "submitted_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
