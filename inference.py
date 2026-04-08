@@ -587,26 +587,26 @@ def main() -> None:
     args = parser.parse_args()
 
     # ── Validate + load credentials ───────────────────────────────────
+    # API_KEY is injected by the hackathon LiteLLM proxy — always prefer it
+    api_key  = os.environ.get("API_KEY", "").strip()
     api_base = os.environ.get("API_BASE_URL", "").strip()
-    model    = os.environ.get("MODEL_NAME",   "").strip()
-    # Prefer API_KEY (injected by the hackathon LiteLLM proxy); fall back to HF_TOKEN
-    api_key  = (os.environ.get("API_KEY", "").strip()
-                or os.environ.get("HF_TOKEN", "").strip())
+    model    = os.environ.get("MODEL_NAME", "").strip()
 
-    _env_vars_present = api_base and model and api_key
-
-    if args.dry_run or not _env_vars_present:
-        if not args.dry_run and not _env_vars_present:
-            missing = [n for n, v in [("API_BASE_URL", api_base), ("MODEL_NAME", model), ("API_KEY / HF_TOKEN", api_key)] if not v]
+    # Hard-fail if required vars are missing (unless --dry-run)
+    if not args.dry_run:
+        missing = [n for n, v in [("API_KEY", api_key), ("API_BASE_URL", api_base), ("MODEL_NAME", model)] if not v]
+        if missing:
             print(
-                f"[WARN] Environment variable(s) not set: {', '.join(missing)}. "
-                "Falling back to dry-run / heuristic agent.",
+                f"[ERROR] Required environment variable(s) not set: {', '.join(missing)}. "
+                "Set them or pass --dry-run for heuristic mode.",
                 file=sys.stderr,
             )
+            sys.exit(1)
+
+    if args.dry_run:
         api_base = api_base or "http://localhost:8000/v1"
         model    = model    or "heuristic-baseline"
         client   = None
-        args.dry_run = True
         if args.verbose:
             print("[INFO] dry-run mode — no LLM calls will be made.", file=sys.stderr)
     else:
@@ -615,10 +615,10 @@ def main() -> None:
                 api_key  = api_key,
                 base_url = api_base,
             )
+            print(f"[INFO] OpenAI client initialised. base_url={api_base} model={model}", file=sys.stderr)
         except Exception as exc:
-            print(f"[WARN] Failed to init OpenAI client ({exc}). Falling back to dry-run.", file=sys.stderr)
-            client       = None
-            args.dry_run = True
+            print(f"[ERROR] Failed to init OpenAI client ({exc}). Exiting.", file=sys.stderr)
+            sys.exit(1)
 
     # ── Run all 3 tasks ────────────────────────────────────────────────
     all_results: list[dict[str, Any]] = []
