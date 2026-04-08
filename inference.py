@@ -382,7 +382,7 @@ def _log_end(
 ) -> None:
     """Emit [END] log line for a completed task."""
     print(
-        f"[END]   {json.dumps({'task_id': task_id, 'score': round(max(0.001, min(0.999, score)), 4), 'outcome': outcome, 'total_steps': total_steps, 'total_reward': round(total_reward, 4), 'outcome_correct': outcome_correct, 'steps_efficient': steps_efficient, 'patience_managed': patience_managed, 'deadline_kept': deadline_kept})}",
+        f"[END]   {json.dumps({'task_id': task_id, 'score': round(score, 4), 'outcome': outcome, 'total_steps': total_steps, 'total_reward': round(total_reward, 4), 'outcome_correct': outcome_correct, 'steps_efficient': steps_efficient, 'patience_managed': patience_managed, 'deadline_kept': deadline_kept})}",
         flush=True,
     )
 
