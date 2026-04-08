@@ -252,7 +252,7 @@ def grade_task(task: Task, verbose: bool = False) -> GraderResult:
         0.15 * float(patience_managed) +
         0.15 * float(deadline_kept)
     )
-    score = max(0.0, min(1.0, round(score, 4)))
+    score = round(max(0.001, min(0.999, score)), 4)
 
     if not outcome_correct:
         notes.append(
@@ -376,7 +376,7 @@ def build_json_output(results: list[GraderResult]) -> dict:
             "scores":        scores,
             "average_score": round(sum(scores) / len(scores), 4),
             "all_pass":      all(s >= 0.50 for s in scores),
-            "all_in_range":  all(0.0 <= s <= 1.0 for s in scores),
+            "all_in_range":  all(0.0 < s < 1.0 for s in scores),
         },
     }
 
