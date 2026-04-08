@@ -100,7 +100,7 @@ tasks:
       account before the ₹10L brand deal expires. Optimal path:
       EMPATHIZE → CHECK_IP_LOGS → EMPATHIZE → REQUEST_ID_VOICE_VERIFY → RESTORE_ACCOUNT.
     success_condition: "outcome == CREATOR_RESTORED"
-   target_score_range: [0.75, 0.999] 
+    target_score_range: [0.75, 0.999]
     grader_weights:
       outcome_correct:  0.50
       steps_efficient:  0.20
@@ -140,7 +140,7 @@ tasks:
       low verification gain despite cooperation, and avoidance of verification steps.
       Optimal path: CHECK_IP_LOGS → EMPATHIZE → REQUEST_ID_VOICE_VERIFY → REJECT_ACCOUNT.
     success_condition: "outcome == CORRECT_REJECTION"
-  target_score_range: [0.75, 0.999] 
+    target_score_range: [0.60, 0.999]
     grader_weights:
       outcome_correct:  0.50
       steps_efficient:  0.20
@@ -853,8 +853,8 @@ api:
         difficulty:       string
         score:
           type:  float
-          range: (0.0, 1.0)
-          description: "Weighted grader score. All scores are strictly in (0.0, 1.0) exclusive (clamped to 0.001–0.999)."
+          range: [0.0, 1.0]
+          description: "Weighted grader score. All scores are in [0.0, 1.0]."
         outcome_correct:
           type:   bool
           weight: 0.50
@@ -904,14 +904,14 @@ api:
 # ─────────────────────────────────────────────────────────────────────────────
 
 grader:
-  score_range: [0.001, 0.999]
+  score_range: [0.0, 1.0]
   formula: >
     score = (
       0.50 × outcome_correct  +
       0.20 × steps_efficient  +
       0.15 × patience_managed +
       0.15 × deadline_kept
-    ), clamped to (0.0, 1.0) exclusive (min=0.001, max=0.999), rounded to 4 decimal places.
+    ), clamped to [0.0, 1.0], rounded to 4 decimal places.
 
   criteria:
     outcome_correct:
