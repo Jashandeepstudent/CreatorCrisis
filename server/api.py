@@ -346,8 +346,10 @@ async def health():
 
 
 @app.post("/reset", tags=["openenv"])
-async def reset(req: ResetRequest):
+async def reset(req: ResetRequest | None = None):
     """Start a new episode. Resets shaper, milestone tracker, and replay recorder."""
+    if req is None:
+        req = ResetRequest()
     s = _get_session(req.session_id)
     with s.lock:
         env = CreatorCrisisEnv(render_mode=None)
