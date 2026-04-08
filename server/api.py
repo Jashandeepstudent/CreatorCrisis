@@ -175,7 +175,7 @@ class GraderRequest(BaseModel):
 class LBSubmitRequest(BaseModel):
     task_id:     str   = Field(...)
     agent_name:  str   = Field(..., max_length=64)
-    score:       float = Field(..., ge=0.0, le=1.0)
+    score:       float = Field(..., gt=0.0, lt=1.0)
     total_steps: int   = Field(..., ge=0)
     session_id:  str   = Field(default="default")
     notes:       str   = Field(default="")
@@ -307,12 +307,12 @@ def _grade(session: _Session, task_id: str) -> dict:
     patience_managed = final_pat > 0 or outcome_correct
     deadline_kept    = not cliff_edge
 
-    score = max(0.0, min(1.0, round(
+    score = round(max(0.001, min(0.999,
         0.50 * float(outcome_correct) +
         0.20 * float(steps_efficient) +
         0.15 * float(patience_managed) +
-        0.15 * float(deadline_kept), 4
-    )))
+        0.15 * float(deadline_kept)
+    )), 4)
 
     if not outcome_correct:
         notes.append(f"Wrong terminal: outcome={outcome}, expected {expected_good}.")
@@ -344,15 +344,10 @@ async def health():
     """Liveness probe. HF Space automated ping hits this."""
     return {"status": "ok", "env": "CreatorCrisisEnv", "version": "1.0.0"}
 
-@app.get("/", tags=["liveness"])
-async def root():
-    return RedirectResponse(url="/docs")
 
 @app.post("/reset", tags=["openenv"])
-async def reset(req: ResetRequest | None = None):
+async def reset(req: ResetRequest):
     """Start a new episode. Resets shaper, milestone tracker, and replay recorder."""
-    if req is None:
-        req = ResetRequest()
     s = _get_session(req.session_id)
     with s.lock:
         env = CreatorCrisisEnv(render_mode=None)
