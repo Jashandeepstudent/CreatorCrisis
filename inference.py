@@ -381,10 +381,8 @@ def _log_end(
     deadline_kept:    bool,
 ) -> None:
     """Emit [END] log line for a completed task."""
-    # Clamp to strictly (0, 1) as required by the evaluator
-    safe_score = max(1e-6, min(1.0 - 1e-6, float(score)))
     print(
-        f"[END]   {json.dumps({'task_id': task_id, 'score': round(safe_score, 6), 'outcome': outcome, 'total_steps': total_steps, 'total_reward': round(total_reward, 4), 'outcome_correct': outcome_correct, 'steps_efficient': steps_efficient, 'patience_managed': patience_managed, 'deadline_kept': deadline_kept})}",
+        f"[END]   {json.dumps({'task_id': task_id, 'score': round(max(0.001, min(0.999, score)), 4), 'outcome': outcome, 'total_steps': total_steps, 'total_reward': round(total_reward, 4), 'outcome_correct': outcome_correct, 'steps_efficient': steps_efficient, 'patience_managed': patience_managed, 'deadline_kept': deadline_kept})}",
         flush=True,
     )
 
@@ -428,7 +426,7 @@ def _compute_score(
         0.15 * float(patience_managed) +
         0.15 * float(deadline_kept)
     )
-    score = max(1e-6, min(1.0 - 1e-6, round(score, 4)))
+    score = round(max(0.001, min(0.999, score)), 4)
     return score, outcome_correct, steps_efficient, patience_managed, deadline_kept
 
 
