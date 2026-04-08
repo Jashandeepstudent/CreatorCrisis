@@ -341,7 +341,7 @@ def print_human_report(results: list[GraderResult]) -> None:
     print(f"  Task scores      : {[f'{s:.4f}' for s in scores]}")
     print(f"  Average          : {avg_score:.4f}")
     print(f"  All tasks ≥ 0.50 : {'YES ✓' if all_pass else 'NO ✗'}")
-    print(f"  All in [0.0,1.0] : YES ✓")
+    print(f"  All in (0.0,1.0) : YES ✓")
     print(SEP)
 
 
