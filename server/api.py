@@ -40,7 +40,7 @@ for p in [_HERE, _ROOT]:
     if p not in sys.path:
         sys.path.insert(0, p)
 
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import FastAPI, HTTPException, Query, Request, Body
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -346,7 +346,7 @@ async def health():
 
 
 @app.post("/reset", tags=["openenv"])
-async def reset(req: ResetRequest):
+async def reset(req: ResetRequest = Body(default=ResetRequest())):
     """Start a new episode. Resets shaper, milestone tracker, and replay recorder."""
     s = _get_session(req.session_id)
     with s.lock:
