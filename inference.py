@@ -587,14 +587,15 @@ def main() -> None:
     args = parser.parse_args()
 
     # ── Validate + load credentials ───────────────────────────────────
-    # API_KEY is injected by the hackathon LiteLLM proxy — always prefer it
+    # API_KEY and API_BASE_URL are injected by the hackathon LiteLLM proxy
     api_key  = os.environ.get("API_KEY", "").strip()
     api_base = os.environ.get("API_BASE_URL", "").strip()
-    model    = os.environ.get("MODEL_NAME", "").strip()
+    # MODEL_NAME may not be injected — fall back to a sensible default
+    model    = os.environ.get("MODEL_NAME", "").strip() or "gpt-4o"
 
-    # Hard-fail if required vars are missing (unless --dry-run)
+    # Hard-fail only if the proxy credentials are missing (unless --dry-run)
     if not args.dry_run:
-        missing = [n for n, v in [("API_KEY", api_key), ("API_BASE_URL", api_base), ("MODEL_NAME", model)] if not v]
+        missing = [n for n, v in [("API_KEY", api_key), ("API_BASE_URL", api_base)] if not v]
         if missing:
             print(
                 f"[ERROR] Required environment variable(s) not set: {', '.join(missing)}. "
@@ -602,6 +603,8 @@ def main() -> None:
                 file=sys.stderr,
             )
             sys.exit(1)
+
+    print(f"[INFO] Using model={model} base_url={api_base}", file=sys.stderr)
 
     if args.dry_run:
         api_base = api_base or "http://localhost:8000/v1"
