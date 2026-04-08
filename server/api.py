@@ -366,7 +366,9 @@ async def reset(req: ResetRequest):
             "steps": [], "outcome": None, "total_reward": None,
         })
 
-        return {"episode_id": eid, "observation": _to_json(obs), "info": _to_json(info)}
+        json_info = _to_json(info)
+        json_info["episode_id"] = eid
+        return {"observation": _to_json(obs), "info": json_info}
 
 
 @app.post("/step", tags=["openenv"])
