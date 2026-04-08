@@ -100,7 +100,7 @@ tasks:
       account before the ₹10L brand deal expires. Optimal path:
       EMPATHIZE → CHECK_IP_LOGS → EMPATHIZE → REQUEST_ID_VOICE_VERIFY → RESTORE_ACCOUNT.
     success_condition: "outcome == CREATOR_RESTORED"
-    target_score_range: [0.75, 1.00]
+   target_score_range: [0.75, 0.999] 
     grader_weights:
       outcome_correct:  0.50
       steps_efficient:  0.20
@@ -140,7 +140,7 @@ tasks:
       low verification gain despite cooperation, and avoidance of verification steps.
       Optimal path: CHECK_IP_LOGS → EMPATHIZE → REQUEST_ID_VOICE_VERIFY → REJECT_ACCOUNT.
     success_condition: "outcome == CORRECT_REJECTION"
-    target_score_range: [0.60, 1.00]
+  target_score_range: [0.75, 0.999] 
     grader_weights:
       outcome_correct:  0.50
       steps_efficient:  0.20
